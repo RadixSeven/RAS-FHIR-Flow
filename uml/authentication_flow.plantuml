@@ -1,9 +1,8 @@
 @startuml "authentication_flow"
-' java -jar plantuml.jar -verbose docs/uml/authentication_flow.plantuml -o imgs
-actor user as User
-entity "SMART app" as App
-participant "FHIR" as Fhir
 database "FHIR auth db" as FhirDb
+participant "FHIR" as Fhir
+entity "SMART app" as App
+actor user as User
 participant "RAS auth" as Ras
 
 note left of User
@@ -35,17 +34,61 @@ before trusting it and taking
 action based on it
 end note
 
-'TODO Finish rewriting SMART section'
-App -> User : Redirect browser to RAS auth
-User -> Ras : Login
-Ras -> User: Consent for SMART App to have access?
+App -> User : Redirect browser to RAS ""/authorize""\nmust request ""openid"" scope
+note left of User
+This depends on getting
+RAS to accept some FHIR
+scopes. A fallback is to
+make the URL for "RAS" a
+307 redirect that rewrites
+the scope parameter. This
+should work OK for GET
+requests however, it
+will not be available for
+POST
+
+Unfortunately, it seems
+that RAS only gives
+"everything" access right
+now. They depend on the
+application being
+trustworthy and requesting
+a reduced scope in a separate
+step after the user has
+given them access to everything.
+Or maybe they will have the
+user select scopes during
+consent procedure and it
+will be up to the app to
+check that it got everything
+it needs. Or maybe RAS will
+have the requested access
+tied to the client id.
+
+Another work-around is to
+use the $compress-passport
+endpoint to allow restricting
+the scope.
+
+A final work-around is to
+set up our own broker to grab
+the passport from RAS and restrict
+it to the correct scope.
+end note
+User -> Ras : Perform login (if needed)
+Ras -> User: Ask for consent for SMART App to have access?
 User -> Ras : Give consent
+Ras -> User : Redirect browser to ""APP_REDIRECT_URL"" with code
+User -> App : ""GET APP_REDIRECT_URL""
+App -> Ras : ""POST"" to ""/token"" endpoint
 Ras -> User : Redirect browser to APP_TOKEN_REDIRECT_URI
 User -> App: Request APP_TOKEN_REDIRECT_URI
 
 note left of User
 Here we add extra steps
-not in normal SMART
+not in normal SMART. I hope
+we can get RAS to relent
+and not require these.
 end note
 
 App -> App : Detect that these are RAS endpoints
