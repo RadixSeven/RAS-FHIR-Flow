@@ -1,0 +1,60 @@
+@startuml "authentication_flow"
+' java -jar plantuml.jar -verbose docs/uml/authentication_flow.plantuml -o imgs
+actor user as User
+entity "SMART app" as App
+participant "FHIR" as Fhir
+database "FHIR auth db" as FhirDb
+participant "RAS auth" as Ras
+
+note left of User
+This flow is identical to
+SMART at the beginning. A
+note will mark where it
+diverges.
+
+An SPA will need to use
+a service like Okta or
+Auth0 to guard a client
+secret that it can share
+with RAS
+end note
+
+User -> App : Enter base URL
+App -> Fhir : Request /metadata
+Fhir -> App : Return /metadata
+App -> App : Extract token and auth endpoints
+App -> User : Ready
+... User optionally interacts with public parts of API ...
+User -> App : Click Login to FHIR Server
+
+note left of User
+Even when not mentioned,
+the receiver of any message
+validates its contents
+before trusting it and taking
+action based on it
+end note
+
+'TODO Finish rewriting SMART section'
+App -> User : Redirect browser to RAS auth
+User -> Ras : Login
+Ras -> User: Consent for SMART App to have access?
+User -> Ras : Give consent
+Ras -> User : Redirect browser to APP_TOKEN_REDIRECT_URI
+User -> App: Request APP_TOKEN_REDIRECT_URI
+
+note left of User
+Here we add extra steps
+not in normal SMART
+end note
+
+App -> App : Detect that these are RAS endpoints
+App -> Ras : Request passport from /userinfo
+App -> Fhir : PUT to $compress-passport
+Fhir -> Fhir : Normalize passport JSON
+Fhir-> FhirDb: Record normalized passport\nand hash if not present\n(look up using hash)\nUse secure GUID for key
+Fhir-> App : Return JWT containing GUID key to passport in table
+App -> App: Save JWT for passing to API
+App -> User: Ready
+
+@enduml
