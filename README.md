@@ -10,6 +10,52 @@ construed as a promise that anyone will be able to depend on the documents in
 the repository either as a source for information or as something to build on.
 It may also not remain public.
 
+# Setup, Installation, and Build
+
+## Setup and Installation
+
+### Setup
+
+This has only ever been built on Linux (specifically, the Windows Linux
+Subsystem running Ubuntu 18.04). You must install `npm` to run the installation.
+The simple method is to use:
+
+    sudo apt install nodejs npm
+
+Google will give you many other options.
+
+I use `npm` because it is the easiest way to install `prettier` and `bazel`.
+
+### Installation
+
+Clone the repository and `cd` to the checkout directory. Then execute
+
+    npm install
+
+## Building
+
+### Build all
+
+To rebuild, run
+
+    npx bazelisk build "...:all"
+
+The `*.png` files will be in `bazel-bin/uml/*.png`
+
+### Update files in the image directory
+
+To update and commit, run the following in an up-to-date repository
+
+    bash update_repo_files.sh
+    git commit -a
+
+# Contributing
+
+You should use `prettier` on Markdown files (like this one.) I haven't installed
+pre-commit hooks since my editor runs it automatically and there are no linters
+I know of for PlantUML. Use a Pull Request to enable us to comment on your
+changes.
+
 # Design Considerations
 
 ## How to include the passport in controlled-access requests
