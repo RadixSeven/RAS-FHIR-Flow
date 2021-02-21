@@ -47,6 +47,12 @@ requests however, it
 will not be available for
 POST
 
+We will probably need to
+use the full URL-form
+of the scopes that starts with
+""http://smarthealthit.org/""
+""fhir/scopes/""
+
 Unfortunately, it seems
 that RAS only gives
 "everything" access right
@@ -74,6 +80,13 @@ A final work-around is to
 set up our own broker to grab
 the passport from RAS and restrict
 it to the correct scope.
+
+Note that all of these except the
+"set up our own broker" require
+lots of trust on the SMART app
+to  "do the right thing" and
+not abuse the over-large powers
+it gets on the first grant.
 end note
 User -> Ras : Perform login (if needed)
 Ras -> User: Ask for consent for SMART App to have access?
