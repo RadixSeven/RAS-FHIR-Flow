@@ -100,6 +100,45 @@ can go to the RAS server and retrieve a passport a compressed auth token. You
 can also exchange that compressed token for one which corresponds to a passport
 with reduced privileges.
 
+Since we don't need to work with OAuth etc, our returned token can avoid
+JOSE/JWT. But we'll use it anyway. In a few minutes of Googling I don't see any
+good alternatives. (See ["Why I chose JWT"](#why-i-choose-jwt-for-our-tokens)
+for more details.) So, I'll stick with the devil I know; I'll use JWT but limit
+the algorithm to RSA and limit the header to a fixed size (to give attackers
+less room for creative JSON stuffing).
+
+#### Stateless option
+
+Since we are only interested in what consent groups the user can see, we could
+conceivably be stateless. Encoding 9000 consent groups takes 9000 bits or 1125
+bytes. This expands to 1500 bytes under base64 wrapping (2000 bytes since most
+token formats require us to wrap it twice.) However, in most circumstances most
+of those bits are 0 and when they aren't we'd expect them mostly to be 1 (if
+someone has access to most of the consent groups, they probably have access to
+almost all of them.) So, Golomb coding should reduce the size substantially.
+
+Here's a basic data structure:
+
+    num_consent_groups  varint
+    num_groups_with_access varint
+    consent_group_list_update_time varint
+    has_access golomb_compressed_bit_vector
+
+We assume that the expiration date etc are in the standard JWT claims in the
+wrapper.
+
+One problem will be distributing an up-to-date list of the consent groups
+in-order in such a way that adding a consent group doesn't accidentally give
+access to the wrong group. I think we can solve that by having the consent group
+list be in the database (with a sort order that is part of the consent group
+list data e.g. each group has both an id and a sort order index). When the list
+is updated, the code treats this as invalidating all the keys requiring the
+passports to be re-submitted.
+
+We need to be careful to obey the standard for how long our token can last to
+allow for various validation changes (for example RAS could invalidate their old
+signing key) and early rejection of the token.
+
 ### Auth in body
 
 There is a special field in the body of the request to hold authorization bearer
@@ -143,3 +182,61 @@ additional step at the beginning of ours to shrink the passport into something
 of usable size. Since I also think that RAS ought to give tokens of usable size,
 the "Reduced Size" option is more in-line with how I perceive RAS will develop
 in the future.
+
+# Security
+
+## <span id="why-i-choose-jwt-for-our-tokens">Why I choose JWT for our tokens</span>
+
+[An article on JWT alternatives from December 2018](https://wesleyhill.co.uk/p/alternatives-to-jwt-tokens/)
+lists 3: PASETO, Macaroons, and Branca.
+[Another article from April 2020](https://www.scottbrady91.com/JOSE/Alternatives-to-JWTs)
+covers Fernet, Branca, and PASETO. None look like a clear winner. PASETO is the
+most promising and it
+[has similar criticisms to JWT](https://mailarchive.ietf.org/arch/msg/jose/sz6XzHkVP2eWip_OiV5OkPggWWA/).
+
+### Branca
+
+Branca's site got flagged by my antivirus so I eliminated it since security
+problems are not a promising development for a security protocol. Even if that
+is just a transient issue, it looks like Branca is only for internal systems
+using symmetric encryption not for our application.
+
+### Macaroons
+
+Macaroons has stalled development. The last commit to
+[`jmacaroons`](https://github.com/nitram509/jmacaroons/) was two years ago.
+There are 10 open `dependabot` pull requests to fix unsafe dependencies which
+date back years.
+
+### PASETO
+
+PASETO's last commit was less than a month ago, so someone still loves it. It
+was presented at Defcon 26 by someone who was concerned with the security
+implications of bad developer UI. However, it conceivably could have the same
+problems with switching the algorithm to symmetric that JWT does.
+
+## JWT Testing
+
+I realized, looking at the JWTs that security software frequently has
+implementation bugs and we should go the extra mile and have our own external
+test suite for our JWT-using tokens that checks for the problems we're solving
+in our software and some of the ones JWT library ought to be solving.
+
+- Check for bad algorithms (NONE, not the RSA256 algorithm)
+- Check for signing using a different key
+- Check for big and/or malformed JSON payloads. Maybe we don't parse JSON for
+  the JWTs we produce. Just string-compare the headers to a set of fixed headers
+  and the payloads have minimal keys with one custom key that contains a
+  protobuf message with our real payload structure and a second telling what the
+  schema of that message is.
+
+# Testing
+
+## Mock RAS
+
+In our dev environment, we chould have a Mock RAS for end-to-end functional
+testing of our auth\*. This will allow us to test edge cases in the auth (like
+invalidating the keys etc.) The dev deployment of the server will have its
+configuration values set to the Mock RAS then we can run tests by configuring
+the Mock RAS in different ways and the passing the values to the dev-deployed
+server.
