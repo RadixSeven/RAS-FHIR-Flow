@@ -57,16 +57,16 @@ dbGaP Passport
 System
 end note
 Fhir -> dbGap: Request user token\n""POST https://auth.ncbi.nlm.nih.gov/jwt/user""\n""route=wga&WGA_SESSION=<""cookie value"">""
-dbGaP -> Fhir: ""user_token"" as JWT
+dbGap -> Fhir: ""user_token"" as JWT
 note left of Fhir
 The FHIR server will verify all JWTs using
 the public key from
 [[http://sponomar.ncbi.nlm.nih.gov/jwt/jwt.html]]
-which is the documentation of the dbGaP
+which is the documentation of the dbGap
 Passport System
 end note
 Fhir -> dbGap: Request dbGaP Passport\n""POST https://auth.ncbi.nlm.nih.gov/jwt/user-passport""\n""jwt_auth_token=<""user token"">""
-dbGaP -> Fhir: ""user_passport_token"" as JWT
+dbGap -> Fhir: ""user_passport_token"" as JWT
 Fhir -> Cache: Set passport\nfor ""WGA_SESSION""
 Cache -> Fhir: Success
 Fhir -> App: Response with data limited to what the passport\nsays is permissible.
