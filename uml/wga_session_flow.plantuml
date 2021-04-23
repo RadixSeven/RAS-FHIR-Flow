@@ -1,0 +1,74 @@
+@startuml "wga_session_flow"
+''''''''''''''''''
+'This is a proposed interim flow to use while we wait for full authorization solutions to come online
+'
+'It uses authentication to do authorization but is limited to users in the nih domain, so it should be OK as a
+'temporary measure.
+''''''''''''''''''
+actor "User/Browser" as User
+entity "NIH-hosted Web app" as App
+participant "FHIR" as Fhir
+database "Cache" as Cache
+participant "dbGaP Passport System" as dbGap
+participant "NIH Login" as NihLogin
+
+note left of App
+This app must be
+on HTTPS in the
+nih.gov domain
+to access the
+WGA_SESSION
+cookie.
+end note
+
+User -> App : Click login link
+App -> NihLogin : Request user login
+NihLogin -> User: Display login page
+User -> NihLogin: Authenticate (via password / PIV / etc)
+NihLogin -> User: Redirect back to app set WGA_SESSION cookie
+User -> App: Serve page from redirect
+note left of User
+Every time the user
+makes a request to
+the app, from here
+onward, it will send
+the WGA_SESSION
+cookie. If this is a
+single-page app, this
+request will be where
+it receives access to
+the cookie.
+end note
+App -> User : Ready
+
+... User optionally interacts with public parts of API ...
+
+User -> App: Do something with\ncontrolled access data
+App -> Fhir: Controlled access query with the ""Authorization""\nheader set to\n""Bearer WGA_SESSION <cookie value>""
+Fhir -> Cache: Get passport\nfor ""WGA_SESSION""
+Cache -> Fhir: None recorded
+note left of Cache
+If there were a
+passport, it would be
+returned here and
+we'd skip the
+interaction with the
+dbGaP Passport
+System
+end note
+Fhir -> dbGap: Request user token\n""POST https://auth.ncbi.nlm.nih.gov/jwt/user""\n""route=wga&WGA_SESSION=<""cookie value"">""
+dbGaP -> Fhir: ""user_token"" as JWT
+note left of Fhir
+The FHIR server will verify all JWTs using
+the public key from
+[[http://sponomar.ncbi.nlm.nih.gov/jwt/jwt.html]]
+which is the documentation of the dbGaP
+Passport System
+end note
+Fhir -> dbGap: Request dbGaP Passport\n""POST https://auth.ncbi.nlm.nih.gov/jwt/user-passport""\n""jwt_auth_token=<""user token"">""
+dbGaP -> Fhir: ""user_passport_token"" as JWT
+Fhir -> Cache: Set passport\nfor ""WGA_SESSION""
+Cache -> Fhir: Success
+Fhir -> App: Response with data limited to what the passport\nsays is permissible.
+App -> User: Display data
+@enduml
