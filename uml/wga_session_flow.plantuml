@@ -5,6 +5,17 @@
 'It uses authentication to do authorization but is limited to users in the nih domain, so it should be OK as a
 'temporary measure.
 ''''''''''''''''''
+skinparam titleBackgroundColor Brown-White
+skinparam titleBorderThickness 1
+
+title
+Detailed interim authorization flow
+For on-campus users
+Accessing NIH-hosted apps
+While RAS lacks dbGaP permissions
+end title
+
+
 actor "User/Browser" as User
 entity "NIH-hosted Web app" as App
 participant "FHIR" as Fhir
