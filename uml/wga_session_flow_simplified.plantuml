@@ -2,6 +2,15 @@
 ''''''''''''''''''
 'This is a simplified version of wga_session_flow.plantuml giving an overview without the details
 ''''''''''''''''''
+skinparam titleBackgroundColor DarkGreen-White
+skinparam titleBorderThickness 1
+
+title
+Overview of the interim authorization
+That on-campus users can use
+To access NIH-hosted apps
+While RAS lacks dbGaP permissions
+end title
 
 note left of Authenticate
 This is a simplified version
