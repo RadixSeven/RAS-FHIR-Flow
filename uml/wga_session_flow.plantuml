@@ -9,9 +9,9 @@ skinparam titleBackgroundColor Brown-White
 skinparam titleBorderThickness 1
 
 title
-Detailed interim authorization flow
-For on-campus users
-Accessing NIH-hosted apps
+Detailed diagram of the interim authorization flow
+That on-campus users can use
+To access NIH-hosted apps
 While RAS lacks dbGaP permissions
 end title
 
