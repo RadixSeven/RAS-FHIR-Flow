@@ -1,28 +1,29 @@
 @startuml "authentication_flow"
+database "NCBI Clearinghouse" as Clearinghouse
 database "FHIR auth db" as FhirDb
 participant "FHIR" as Fhir
-entity "SMART app" as App
+entity "Client app" as App
 actor user as User
 participant "RAS auth" as Ras
 
 note left of User
-This flow is identical to
-SMART at the beginning. A
-note will mark where it
-diverges.
-
 An SPA will need to use
 a service like Okta or
 Auth0 to guard a client
 secret that it can share
 with RAS
+
+This flow is not compatible
+with SMART because RAS
+does not understand FHIR
+scopes. If we can make it
+understand them then the
+only disconnect will
+be fetching the passport
+on the client app.
 end note
 
 User -> App : Enter base URL
-App -> Fhir : Request /metadata
-Fhir -> App : Return /metadata
-App -> App : Extract token and auth endpoints
-App -> User : Ready
 ... User optionally interacts with public parts of API ...
 User -> App : Click Login to FHIR Server
 
@@ -35,59 +36,6 @@ action based on it
 end note
 
 App -> User : Redirect browser to RAS ""/authorize""\nmust request ""openid"" scope
-note left of User
-This depends on getting
-RAS to accept some FHIR
-scopes. A fallback is to
-make the URL for "RAS" a
-307 redirect that rewrites
-the scope parameter. This
-should work OK for GET
-requests however, it
-will not be available for
-POST
-
-We will probably need to
-use the full URL-form
-of the scopes that starts with
-""http://smarthealthit.org/""
-""fhir/scopes/""
-
-Unfortunately, it seems
-that RAS only gives
-"everything" access right
-now. They depend on the
-application being
-trustworthy and requesting
-a reduced scope in a separate
-step after the user has
-given them access to everything.
-Or maybe they will have the
-user select scopes during
-consent procedure and it
-will be up to the app to
-check that it got everything
-it needs. Or maybe RAS will
-have the requested access
-tied to the client id.
-
-Another work-around is to
-use the $compress-passport
-endpoint to allow restricting
-the scope.
-
-A final work-around is to
-set up our own broker to grab
-the passport from RAS and restrict
-it to the correct scope.
-
-Note that all of these except the
-"set up our own broker" require
-lots of trust on the SMART app
-to  "do the right thing" and
-not abuse the over-large powers
-it gets on the first grant.
-end note
 User -> Ras : Perform login (if needed)
 Ras -> User: Ask for consent for SMART App to have access?
 User -> Ras : Give consent
@@ -96,21 +44,26 @@ User -> App : ""GET APP_REDIRECT_URL""
 App -> Ras : ""POST"" to ""/token"" endpoint
 Ras -> User : Redirect browser to APP_TOKEN_REDIRECT_URI
 User -> App: Request APP_TOKEN_REDIRECT_URI
-
-note left of User
-Here we add extra steps
-not in normal SMART. I hope
-we can get RAS to relent
-and not require these.
-end note
-
 App -> App : Detect that these are RAS endpoints
 App -> Ras : Request passport from /userinfo
-App -> Fhir : PUT to $compress-passport
-Fhir -> Fhir : Normalize passport JSON
-Fhir-> FhirDb: Record normalized passport\nand hash if not present\n(look up using hash)\nUse secure GUID for key
-Fhir-> App : Return JWT containing GUID key to passport in table
-App -> App: Save JWT for passing to API
+Ras -> App : Passport
+note left of App
+Initially, this will be a full passport.
+This can easily be too big to fit in
+HTTPS Authorization header fields if the
+user can see too many studies.
+
+Eventually, an update to the GA4GH standard
+should allow RAS to use a smaller passport.
+end note
+App -> User: Error if passport is too big
 App -> User: Ready
+... User may do things on public side of API ...
+User -> App: Do something requiring controlled data
+App -> Fhir: Make request with passport or error to user if\nrequest is not representable due to passport size
+Fhir -> Clearinghouse: Process passport
+Clearinghouse -> Fhir: User permissions and identity
+Fhir -> App: FHIR Resources the user has permission to see
+App -> User: Display data
 
 @enduml
