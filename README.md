@@ -18,9 +18,10 @@ It may also not remain public.
 
 This has only ever been built on Linux (specifically, the Windows Linux
 Subsystem running Ubuntu 18.04). You must install `npm` to run the installation.
+You also need the JDK and `graphviz` (`dot`) to run `plantuml`
 The simple method is to use:
 
-    sudo apt install nodejs npm
+    sudo apt install nodejs npm graphviz default-jdk
 
 Google will give you many other options.
 
