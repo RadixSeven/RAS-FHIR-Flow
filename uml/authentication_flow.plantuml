@@ -35,7 +35,7 @@ before trusting it and taking
 action based on it
 end note
 
-App -> User : Redirect browser to RAS ""/authorize""\nmust request ""openid"" scope
+App -> User : Direct browser to RAS ""/authorize""\nmust request ""openid"" and\n""ga4gh_passport_v1"" scopes
 User -> Ras : Perform login (if needed)
 Ras -> User: Ask for consent for SMART App to have access?
 User -> Ras : Give consent
