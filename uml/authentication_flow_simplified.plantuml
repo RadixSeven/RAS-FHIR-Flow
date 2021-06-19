@@ -1,0 +1,39 @@
+@startuml "authentication_flow_simplified"
+''''''''''''''''''
+'This is a simplified version of authentication_flow.plantuml giving an overview without the details
+''''''''''''''''''
+skinparam titleBackgroundColor Blue-White
+skinparam titleBorderThickness 1
+
+title
+Overview of
+the authorization flow
+for clients using RAS
+to access
+dbGaP resources on the
+dbGaP FHIR API
+end title
+
+note left of Authenticate
+This is a simplified version
+that is clearer on what is happening
+but omits important details
+end note
+
+[*] --> Authenticate: User clicks login button on the client app
+Authenticate --> SetCookie: User authenticates with NIH Login\n NIH Login sets the WGA_SESSION cookie in the browser
+SetCookie --> AccessService: User tries to interact with controled-access data
+AccessService --> RetrievePermissions: App (NIH only) passes WGA_SESSION cookie value\n as bearer token to FHIR API along with query
+RetrievePermissions --> RetrievePassport: FHIR API passes cookie value to dbGaP Passport service\n (This service already exists)
+RetrievePassport --> RunQuery: Passport service returns the appropriate passport
+RunQuery --> AppWithData: FHIR API returns the data filtered to match the authorization\n encoded in the passport
+AppWithData --> [*]: The client app uses the data to fulfill the user's request
+
+note left of AccessService
+If an app has a security hole
+then a malicious app could
+potentially call it and cause
+it to leak the WGA_SESSION
+value.
+end note
+@enduml
