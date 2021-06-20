@@ -1,13 +1,13 @@
 load("//uml:plantuml_png.bzl", "plantuml_png")
 
 plantuml_png(
-    name = "authentication_flow_png",
-    src = "authentication_flow.plantuml"
+    name = "ras_authorization_flow_png",
+    src = "ras_authorization_flow.plantuml"
 )
 
 plantuml_png(
-    name = "authentication_flow_simplified_png",
-    src = "authentication_flow_simplified.plantuml"
+    name = "ras_authorization_flow_simplified_png",
+    src = "ras_authorization_flow_simplified.plantuml"
 )
 
 plantuml_png(

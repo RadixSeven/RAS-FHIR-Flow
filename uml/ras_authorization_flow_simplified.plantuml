@@ -1,6 +1,6 @@
-@startuml "authentication_flow_simplified"
+@startuml "ras_authorization_flow_simplified"
 ''''''''''''''''''
-'This is a simplified version of authentication_flow.plantuml giving an overview without the details
+'This is a simplified version of ras_authorization_flow.plantuml giving an overview without the details
 ''''''''''''''''''
 skinparam titleBackgroundColor Blue-White
 skinparam titleBorderThickness 1

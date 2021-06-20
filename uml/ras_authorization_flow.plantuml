@@ -1,4 +1,4 @@
-@startuml "authentication_flow"
+@startuml "ras_authorization_flow"
 database "NCBI Clearinghouse" as Clearinghouse
 database "FHIR auth db" as FhirDb
 participant "FHIR" as Fhir
