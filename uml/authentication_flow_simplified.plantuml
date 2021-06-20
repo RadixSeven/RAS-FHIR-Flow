@@ -23,9 +23,9 @@ end note
 [*] --> RASAuthorize: User clicks login button on the client app
 RASAuthorize --> ClientHasPassport: User authorizes client app to access dbGaP data using RAS
 ClientHasPassport --> AccessService: User tries to interact with controlled-access data
-AccessService --> RetrievePermissions: App gives passport to FHIR API in header
-RetrievePermissions --> RetrievePassport: FHIR API gives passport to clearinghouse
-RetrievePassport --> RunQuery: Clearinghouse returns validated permissions.
+AccessService --> APIHasPassport: App gives passport to FHIR API in header
+APIHasPassport --> RetrievePermissions: FHIR API gives passport to clearinghouse
+RetrievePermissions --> RunQuery: Clearinghouse returns validated permissions.
 RunQuery --> AppWithData: FHIR API returns the data filtered to match the authorization\n encoded in the passport
 AppWithData --> [*]: The client app uses the data to fulfill the user's request
 
@@ -41,7 +41,8 @@ end note
 note left of AccessService
 Initially this will not
 work for users who have
-permission to see many consent
+permission to see a large
+number of consent
 groups because the passport
 will be too big to fit in
 the header. However,
